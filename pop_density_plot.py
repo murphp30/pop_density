@@ -45,3 +45,51 @@ for north in norths:
 
 plt.savefig("./Ireland_1k_poulation.png")
 plt.show()
+
+
+"""
+Conversion to/from Lambert Azimuthal Equal Area (LAEA) grid coordinate
+and latitude longitude
+TODO: add units
+"""
+R = 6378137.0 #m
+#"Central_Meridian",10.0],["Latitude_Of_Origin",52.0
+lat_0 = 52.0*(np.pi/180)
+lon_0 = 10.0*(np.pi/180)
+false_easting = 4321000 #m
+false_northing = 3210000
+
+def rho(x, y):
+    return np.sqrt(x**2+y**2)
+def c(x, y):
+    return 2*np.arcsin(rho(x,y)/(2*R))
+def laea_to_latlon(x, y):
+
+    x = (x*1000) - false_easting
+    y = (y*1000) - false_northing
+    lon = lon_0 \
+        + np.arctan( 
+                (x*np.sin(c(x,y))) \
+                / ((rho(x,y)*np.cos(lat_0)*np.cos(c(x,y))) \
+                   -(y*np.sin(lat_0)*np.sin(c(x,y)))) )
+    
+    lat = np.arcsin(
+        (np.cos(c(x,y))*np.sin(lat_0)) \
+        + (y*np.sin(c(x,y))*np.cos(lat_0))/(rho(x,y))
+        
+    )
+    
+    return lat*(180/np.pi), lon*(180/np.pi)
+
+def kprime(lat, lon):
+    return np.sqrt(2/(1 + 
+                      np.sin(lat_0)*np.sin(lat) +
+                      np.cos(lat_0)*np.cos(lat)*np.cos(lon-lon_0)))
+def latlon_to_laea(lat, lon):
+    lat = lat*(np.pi/180)
+    lon = lon*(np.pi/180)
+    x = R*kprime(lat, lon)*np.cos(lat)*np.sin(lon-lon_0)
+    y = R*kprime(lat, lon)*(np.cos(lat_0)*np.sin(lat)-np.sin(lat_0)*np.cos(lat)*np.cos(lon-lon_0))
+    x += false_easting
+    y += false_northing
+    return x, y
