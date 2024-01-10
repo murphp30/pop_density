@@ -2,15 +2,21 @@
 
 from pathlib import Path
 
+import geopandas
+import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
 custom_params = {"axes.spines.right": False, "axes.spines.top": False,
                  "axes.spines.left": False, "axes.spines.bottom": False,
                  "xtick.labelbottom":False, "ytick.labelleft": False,
-                 "xtick.bottom": False, "ytick.left": False,}
-sns.set_theme(style="white", rc=custom_params)
+                 "xtick.bottom": False, "ytick.left": False,
+                 "patch.force_edgecolor": False, "axes.facecolor":"#68d5e7",
+                 "figure.facecolor":"#68d5e7"}
+sns.set_theme(style="dark", rc=custom_params)
+
 #  data from https://ec.europa.eu/eurostat/web/gisco/geodata/reference-data/population-distribution-demography/geostat
 population_1k_data = Path("./GEOSTAT/GEOSTAT_grid_POP_1K_2011_V2_0_1.csv")
 df = pd.read_csv(population_1k_data)
@@ -33,20 +39,33 @@ df = df.drop(df[(df['CNTR_CODE'] == 'UK') & (df['GRID_NORTH'] < 3517.0)].index)
 # only take every 10 longitudes because I'm too lazy to average
 norths = np.sort(pd.unique(df['GRID_NORTH']))[::10]
 df['PLOT_POP'] = df['GRID_NORTH'] + 100*(df['TOT_P']/df['TOT_P'].max())
+gdf = geopandas.read_file("GEOSTAT/GEOSTATReferenceGrid/Grid_ETRS89_LAEA_1K-ref_GEOSTAT_POP_2011_V2_0_1.shp", engine="pyogrio")
 
-plt.figure(figsize=(9,9))
-# plt.figure()
-for north in norths:
-    sns.lineplot(df[df['GRID_NORTH'] == north],
-                 x = 'GRID_EAST', y='PLOT_POP',
-                 color='forestgreen',
-                 drawstyle='steps',
-                 linewidth=2.5)
+fig, ax = plt.subplots(1,1, figsize=(8,8))
+# # plt.figure()
+# for north in norths:
+#     sns.lineplot(df[df['GRID_NORTH'] == north],
+#                  x = 'GRID_EAST', y='PLOT_POP',
+#                  color='forestgreen',
+#                  drawstyle='steps',
+#                  linewidth=2.5)
 
-plt.savefig("./Ireland_1k_poulation.png")
+# plt.savefig("./Ireland_1k_poulation.png")
+# plt.show()
+df = pd.merge(df, gdf, on="GRD_ID")
+gdf = geopandas.GeoDataFrame(df).to_crs("EPSG:4326")
+gdf.plot("TOT_P",
+         ax=ax,
+         cmap="Greens",
+         norm=colors.LogNorm(
+             vmin=df["TOT_P"].min(),
+             vmax=df["TOT_P"].max()
+             ),
+        legend=True
+        )
+plt.tight_layout()
+plt.savefig("./Ireland_1k_poulation_heatmap_cbar.png")
 plt.show()
-
-
 """
 Conversion to/from Lambert Azimuthal Equal Area (LAEA) grid coordinate
 and latitude longitude
