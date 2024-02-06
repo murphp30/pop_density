@@ -50,7 +50,7 @@ fig, ax = plt.subplots(1,1, figsize=(8,8))
 #                  drawstyle='steps',
 #                  linewidth=2.5)
 
-# plt.savefig("./Ireland_1k_poulation.png")
+# plt.savefig("./Ireland_1k_population.png")
 # plt.show()
 df = pd.merge(df, gdf, on="GRD_ID")
 gdf = geopandas.GeoDataFrame(df).to_crs("EPSG:4326")
@@ -64,7 +64,7 @@ gdf.plot("TOT_P",
         legend=True
         )
 plt.tight_layout()
-plt.savefig("./Ireland_1k_poulation_heatmap_cbar.png")
+plt.savefig("./Ireland_1k_population_heatmap_cbar.png")
 plt.show()
 """
 Conversion to/from Lambert Azimuthal Equal Area (LAEA) grid coordinate
